@@ -13,11 +13,11 @@ class CADS:
                 "model": ("MODEL",),
                 "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
                 "t1": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.6}),
-                "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.1}),
+                "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
                 "reverse_process": (["True", "False"],),
             },
             "optional": {
-                "rescale_psi": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
+                "rescale_psi": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.0}),
                 "apply_to": (["uncond", "cond", "both"],),
                 "key": (["y", "c_crossattn"],),
             },
