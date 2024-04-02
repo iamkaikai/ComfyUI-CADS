@@ -1,14 +1,6 @@
 import torch
-
-
-def randn_like(cond, generator=None):
-    return torch.randn(cond.size(), generator=generator).to(cond)
-
-
-# From samplers.py
 COND = 0
 UNCOND = 1
-
 
 class CADS:
     current_step = 0
@@ -21,12 +13,10 @@ class CADS:
                 "model": ("MODEL",),
                 "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
                 "t1": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.6}),
-                "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.9}),
+                "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.1}),
             },
             "optional": {
-                "rescale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.0}),
-                "start_step": ("INT", {"min": -1, "max": 10000, "default": -1}),
-                "total_steps": ("INT", {"min": -1, "max": 10000, "default": -1}),
+                "rescale_psi": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
                 "apply_to": (["uncond", "cond", "both"],),
                 "key": (["y", "c_crossattn"],),
             },
@@ -34,14 +24,12 @@ class CADS:
 
     RETURN_TYPES = ("MODEL",)
     FUNCTION = "do"
-
     CATEGORY = "utils"
 
-    def do(self, model, noise_scale, t1, t2, rescale=0.0, start_step=-1, total_steps=-1, apply_to="both", key="y"):
+    def do(self, model, noise_scale, t1, t2, rescale_psi=1.0, apply_to="both", key="y"):
         previous_wrapper = model.model_options.get("model_function_wrapper")
-
+        print(f'model: {model}')
         im = model.model.model_sampling
-        self.current_step = start_step
         self.last_sigma = None
 
         skip = None
@@ -51,40 +39,28 @@ class CADS:
             skip = COND
 
         def cads_gamma(sigma):
-            if start_step >= total_steps:
-                ts = im.timestep(sigma[0])
-                t = round(ts.item() / 999.0, 2)
-            else:
-                sigma_max = sigma.max().item()
-                if self.last_sigma is not None and sigma_max > self.last_sigma:
-                    self.current_step = start_step
-                t = 1.0 - min(1.0, max(self.current_step / total_steps, 0.0))
-                self.current_step += 1
-                self.last_sigma = sigma_max
-
+            ts = im.timestep(sigma[0])
+            t = 1 - round(ts.item() / 999.0, 3)
             if t <= t1:
-                r = 1.0
+                return 1.0
             elif t >= t2:
-                r = 0.0
-            else:
-                r = (t2 - t) / (t2 - t1)
-            return r
-
+                return 0.0
+            return (t2 - t) / (t2 - t1)
+            
         def cads_noise(gamma, y):
             if y is None:
                 return None
-            s = noise_scale
-            noise = randn_like(y)
+
+            noise = torch.randn_like(y)
             gamma = torch.tensor(gamma).to(y)
-            psi = rescale
-            if psi > 0:
-                y_mean, y_std = y.mean(), y.std()
-            y = gamma.sqrt().item() * y + s * (1 - gamma).sqrt().item() * noise
+            y_mean, y_std = torch.mean(y), torch.std(y)
+            y = gamma.sqrt().item() * y + noise_scale * (1 - gamma).sqrt().item() * noise
+
             # FIXME: does this work at all like it's supposed to?
-            if psi > 0:
-                y_scaled = (y - y.mean()) / y.std() * y_std + y_mean
+            if rescale_psi > 0:
+                y_scaled = (y - torch.mean(y)) / torch.std(y) * y_std + y_mean
                 if not y_scaled.isnan().any():
-                    y = psi * y_scaled + (1 - psi) * y
+                    y = rescale_psi * y_scaled + (1 - rescale_psi) * y
                 else:
                     print("Warning, NaNs during rescale")
             return y
@@ -94,7 +70,7 @@ class CADS:
             timestep = args["timestep"]
             cond_or_uncond = args["cond_or_uncond"]
             c = args["c"]
-
+           
             if noise_scale > 0.0:
                 noise_target = c.get(key, c["c_crossattn"])
                 gamma = cads_gamma(timestep)
