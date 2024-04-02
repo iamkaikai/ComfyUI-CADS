@@ -14,6 +14,7 @@ class CADS:
                 "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
                 "t1": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.6}),
                 "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.1}),
+                "reverse_process": (["True", "False"],),
             },
             "optional": {
                 "rescale_psi": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
@@ -26,7 +27,7 @@ class CADS:
     FUNCTION = "do"
     CATEGORY = "utils"
 
-    def do(self, model, noise_scale, t1, t2, rescale_psi=1.0, apply_to="both", key="y"):
+    def do(self, model, noise_scale, t1, t2, rescale_psi=1.0, apply_to="both", key="y", reverse_process="False"):
         previous_wrapper = model.model_options.get("model_function_wrapper")
         print(f'model: {model}')
         im = model.model.model_sampling
@@ -40,7 +41,13 @@ class CADS:
 
         def cads_gamma(sigma):
             ts = im.timestep(sigma[0])
+
+            if reverse_process == "True":
+                print("reverse_process")
+                ts = 999 - ts
+            
             t = 1 - round(ts.item() / 999.0, 3)
+            print(f'reverse_process: {reverse_process} t: {t}')
             if t <= t1:
                 return 1.0
             elif t >= t2:
@@ -55,14 +62,13 @@ class CADS:
             gamma = torch.tensor(gamma).to(y)
             y_mean, y_std = torch.mean(y), torch.std(y)
             y = gamma.sqrt().item() * y + noise_scale * (1 - gamma).sqrt().item() * noise
-
-            # FIXME: does this work at all like it's supposed to?
-            if rescale_psi > 0:
-                y_scaled = (y - torch.mean(y)) / torch.std(y) * y_std + y_mean
-                if not y_scaled.isnan().any():
-                    y = rescale_psi * y_scaled + (1 - rescale_psi) * y
-                else:
-                    print("Warning, NaNs during rescale")
+            
+            y_scaled = (y - torch.mean(y)) / torch.std(y) * y_std + y_mean
+            if not y_scaled.isnan().any():
+                print("rescale_psi")
+                y = rescale_psi * y_scaled + (1 - rescale_psi) * y
+            else:
+                print("Warning, NaNs during rescale")
             return y
 
         def apply_cads(apply_model, args):

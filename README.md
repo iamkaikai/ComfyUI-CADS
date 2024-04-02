@@ -1,28 +1,34 @@
-# Experimental CADS implementation for ComfyUI
+# ComfyUI CADS Experimental Implementation
 
-Attempts to implement [CADS](https://arxiv.org/abs/2310.17347) for ComfyUI.
+This node aims to enhance the model's output diversity by introducing noise during the sampling process, based on the CADS method outlined in this [paper](https://arxiv.org/abs/2310.17347) specifically for ComfyUI.
 
-Credit also to the [A1111 implementation](https://github.com/v0xie/sd-webui-cads/tree/main) that I used as a reference.
+Forked from [asagi4/ComfyUI-CADS](https://github.com/asagi4/ComfyUI-CADS), this implementation also acknowledges the [A1111 approach](https://github.com/v0xie/sd-webui-cads/tree/main) as an instrumental reference.
 
-There isn't any real way to tell what effect CADS will have on your generations, but you can load [this example workflow](workflows/CADScompare.json?raw=1) into ComfyUI to compare between CADS and non-CADS generations.
+![Screenshot](screenshot.png)
 
-# Usage
+## How to Use
 
-Apply the node to a model and set `noise_scale` > 0.0.
+After initializing other nodes that set a unet wrapper function, apply this node. It maintains existing wrappers while integrating new functionalities.
 
-The node sets a unet wrapper function, but attempts to preserve any existing wrappers, so apply it after other nodes that set a unet wrapper function, and it might still work.
+- `t1`: Original prompt conditioning.
+- `t2`: Noise injection (Gaussian noise) adjusted by `noise_scale`.
+- `noise_scale`: Modulates the intensity of `t2`. Inactive at `0`.
+- `psi_rescale`: Normalizes the noised conditioning. Inactive at `0`.
+- `apply_to`: Targets noise application, with `uncond` as the default.
+- `key`: Determines which prompt undergoes noise addition.
+- `reverse_process`: Reverses the noise injection sequence.
 
-`t1` and `t2` affect the scaling of the added noise; after `t2`, the noise scales down until `t1`, after which no noise is added anymore and the unnoised prompt is used. The diffusion process runs **backwards** from 1 to 0, so `t2` is greater than `t1`.
+The transition between `t1` and `t2` is dynamically managed based on their values, ensuring a smooth integration of the original and noised conditions.
 
-`start_step` and `total_steps` are optional values that affect how the noise scaling schedule is calculated. If `start_step` is greater or equal to `total_steps`, the algorithm uses the sampler's timestep value instead which is not necessarily linear as it's affected by the sampler scheduler.
+![Theory](theory.png)
 
-The `rescale` parameter applies optional normalization to the noised conditioning. It's disabled at 0.
+Recommendations from the paper:
+- `t1` set to `0.2` introduces excessive noise, while `0.9` is minimal.
+- Suggested `noise_scale` ranges from `0.025` to `0.25`.
+- A higher `psi_rescale` value, ideally `1`, mitigates divergence risks, enhancing output quality. Yet, empirical findings indicate setting it to `0` may yield superior results.
+- `reverse_process`: Dictates the diversity control mechanism. Setting it to `True` initiates noise application, fostering overall image diversity. Conversely, `False` starts with the prompt, integrating noise subsequently, which primarily alters details.
 
-`apply_to` allows you to apply the noise selectively, defaulting to `uncond`. `key` selects where to add the noise.
 
-# Bugs
+## Known Issues
 
-Noise was previously applied to cross attention. It's now applied by default to the regular conditioning `y`, which seems to make more sense. Use the `key` parameter to restore the old behaviour.
-
-The implementation might not be correct at all; I'm not 100% clear on the math as to where the noise is actually supposed to be added.
-and I couldn't make it produce quite the same results as the A1111 node. The algorithm still seems to help with variety though.
+Initially applied to cross-attention, noise application has been shifted to regular conditioning `y` for improved relevance. Alter the `key` parameter to revert to the previous mechanism. Presently, the term `attention` is observed within the model's structure.
