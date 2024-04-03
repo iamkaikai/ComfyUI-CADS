@@ -44,11 +44,9 @@ class CADS:
             ts = im.timestep(sigma[0])
 
             if reverse_process == "True":
-                print("reverse_process")
-                ts = 999 - ts
+               ts = 999 - ts
             
             t = 1 - round(ts.item() / 999.0, 3)
-            print(f'reverse_process: {reverse_process} t: {t}')
             if t <= t1:
                 return 1.0
             elif t >= t2:
@@ -58,16 +56,11 @@ class CADS:
         def cads_noise(gamma, y):
             if y is None:
                 return None
-            
-            print(f'noise_type: {noise_type}')
             if noise_type == "Uniform":
-                print(f'aaaaaaaaaaaaaaaaaaaaaaaa')
                 noise = torch.rand_like(y)
             elif noise_type == "Exponential":
-                print(f'bbbbbbbbbbbbbbbbbbbbbbbb')
                 noise = torch.rand_like(y).exponential_()
             else:
-                print(f'cccccccccccccccccccccccc')
                 noise = torch.randn_like(y) # Gaussian noise by default
 
             gamma = torch.tensor(gamma).to(y)
