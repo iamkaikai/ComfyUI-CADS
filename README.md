@@ -26,7 +26,7 @@ The transition between `t1` and `t2` is dynamically managed based on their value
 Recommendations from the paper:
 - `t1` set to `0.2` introduces excessive noise, while `0.9` is minimal.
 - Suggested `noise_scale` ranges from `0.025` to `0.25`.
-- A higher `rescale_psi` value, ideally `1`, mitigates divergence risks, enhancing output quality. Yet, empirical findings indicate setting it to `0` may yield superior results.
+- `rescale_psi`: A higher value, optimally `1`, reduces divergence risks and can improve output quality. However, empirical evidence suggests that the optimal setting for `rescale_psi` can be task-dependent. While `1` tends to generate results closer to the original distribution, setting it to `0` can sometimes provide better outcomes, though this is not consistently the case.
 - `reverse_process`: Dictates the diversity control mechanism. Setting it to `True` initiates noise application, fostering overall image diversity. Conversely, `False` starts with the prompt, integrating noise subsequently, which primarily alters details.
 
 ![Distribution](noise_distr.png)
