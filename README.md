@@ -13,10 +13,11 @@ After initializing other nodes that set a unet wrapper function, apply this node
 - `t1`: Original prompt conditioning.
 - `t2`: Noise injection (Gaussian noise) adjusted by `noise_scale`.
 - `noise_scale`: Modulates the intensity of `t2`. Inactive at `0`.
-- `psi_rescale`: Normalizes the noised conditioning. Inactive at `0`.
+- `noise_type`: The type of the noise distribution.
+- `reverse_process`: Reverses the noise injection sequence.
+- `rescale_psi`: Normalizes the noised conditioning. Inactive at `0`.
 - `apply_to`: Targets noise application, with `uncond` as the default.
 - `key`: Determines which prompt undergoes noise addition.
-- `reverse_process`: Reverses the noise injection sequence.
 
 The transition between `t1` and `t2` is dynamically managed based on their values, ensuring a smooth integration of the original and noised conditions.
 
@@ -25,8 +26,16 @@ The transition between `t1` and `t2` is dynamically managed based on their value
 Recommendations from the paper:
 - `t1` set to `0.2` introduces excessive noise, while `0.9` is minimal.
 - Suggested `noise_scale` ranges from `0.025` to `0.25`.
-- A higher `psi_rescale` value, ideally `1`, mitigates divergence risks, enhancing output quality. Yet, empirical findings indicate setting it to `0` may yield superior results.
+- A higher `rescale_psi` value, ideally `1`, mitigates divergence risks, enhancing output quality. Yet, empirical findings indicate setting it to `0` may yield superior results.
 - `reverse_process`: Dictates the diversity control mechanism. Setting it to `True` initiates noise application, fostering overall image diversity. Conversely, `False` starts with the prompt, integrating noise subsequently, which primarily alters details.
+
+![Distribution](noise_distr.png)
+
+In addition to the normal distribution used for conditioning corruption in the paper, this implementation offers alternative options to cater to varying levels of desired output diversity:
+
+- `Gaussian`: Utilizes normal distribution, maintaining some level of the original composition's integrity.
+- `Uniformal`: Offers greater diversity than Gaussian, providing an even distribution from the mean.
+- `Exponential`: Introduces radical diversity, significantly deviating from the mean.
 
 
 ## Known Issues

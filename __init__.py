@@ -11,9 +11,10 @@ class CADS:
         return {
             "required": {
                 "model": ("MODEL",),
-                "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
                 "t1": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.6}),
                 "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
+                "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
+                "noise_type": (["Gaussian", "Uniform", "Exponential"],),
                 "reverse_process": (["True", "False"],),
             },
             "optional": {
@@ -27,7 +28,7 @@ class CADS:
     FUNCTION = "do"
     CATEGORY = "utils"
 
-    def do(self, model, noise_scale, t1, t2, rescale_psi=1.0, apply_to="both", key="y", reverse_process="False"):
+    def do(self, model, noise_scale, t1, t2, rescale_psi=1.0, apply_to="both", key="y", reverse_process="False", noise_type="Gaussian"):
         previous_wrapper = model.model_options.get("model_function_wrapper")
         print(f'model: {model}')
         im = model.model.model_sampling
@@ -57,15 +58,24 @@ class CADS:
         def cads_noise(gamma, y):
             if y is None:
                 return None
+            
+            print(f'noise_type: {noise_type}')
+            if noise_type == "Uniform":
+                print(f'aaaaaaaaaaaaaaaaaaaaaaaa')
+                noise = torch.rand_like(y)
+            elif noise_type == "Exponential":
+                print(f'bbbbbbbbbbbbbbbbbbbbbbbb')
+                noise = torch.rand_like(y).exponential_()
+            else:
+                print(f'cccccccccccccccccccccccc')
+                noise = torch.randn_like(y) # Gaussian noise by default
 
-            noise = torch.randn_like(y)
             gamma = torch.tensor(gamma).to(y)
             y_mean, y_std = torch.mean(y), torch.std(y)
             y = gamma.sqrt().item() * y + noise_scale * (1 - gamma).sqrt().item() * noise
             
             y_scaled = (y - torch.mean(y)) / torch.std(y) * y_std + y_mean
             if not y_scaled.isnan().any():
-                print("rescale_psi")
                 y = rescale_psi * y_scaled + (1 - rescale_psi) * y
             else:
                 print("Warning, NaNs during rescale")
