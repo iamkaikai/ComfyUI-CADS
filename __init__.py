@@ -15,8 +15,8 @@ class CADS:
                 "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
                 "noise_scale": ("noise_scale",),              # "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
                 "rescale_psi": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
-                "noise_type": ("noise_type",),          # "noise_type": (["Gaussian", "Uniform", "Exponential"],),
-                "reverse_process": ("reverse_CADS",),   # "reverse_process": (["True", "False"],),
+                "noise_type": ("noise_type",),              # "noise_type": (["Gaussian", "Uniform", "Exponential"],),
+                "reverse_process": ("reverse_CADS",),       # "reverse_process": (["True", "False"],),
             },
             "optional": {
                 "apply_to": (["uncond", "cond", "both"],),
