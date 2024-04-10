@@ -5,7 +5,7 @@ UNCOND = 1
 class CADS:
     current_step = 0
     last_sigma = None
-
+                
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -13,12 +13,12 @@ class CADS:
                 "model": ("MODEL",),
                 "t1": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.6}),
                 "t2": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
-                "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
-                "noise_type": (["Gaussian", "Uniform", "Exponential"],),
-                "reverse_process": (["True", "False"],),
+                "noise_scale": ("noise_scale",),              # "noise_scale": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.25}),
+                "rescale_psi": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 1.0}),
+                "noise_type": ("noise_type",),          # "noise_type": (["Gaussian", "Uniform", "Exponential"],),
+                "reverse_process": ("reverse_CADS",),   # "reverse_process": (["True", "False"],),
             },
             "optional": {
-                "rescale_psi": ("FLOAT", {"min": 0.0, "max": 1.0, "step": 0.01, "default": 0.0}),
                 "apply_to": (["uncond", "cond", "both"],),
                 "key": (["y", "c_crossattn"],),
             },
