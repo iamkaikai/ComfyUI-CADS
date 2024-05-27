@@ -34,7 +34,7 @@ Recommendations from the paper:
 In addition to the normal distribution used for conditioning corruption in the paper, this implementation offers alternative options to cater to varying levels of desired output diversity:
 
 - `Gaussian`: Employs normal distribution, preserving a degree of the original composition's structure.
-- `Uniformal`: Generates more diversity than Gaussian by ensuring an even spread from the mean, potentially leading to nonsensical results.
+- `Uniform`: Generates more diversity than Gaussian by ensuring an even spread from the mean, potentially leading to nonsensical results.
 - `Exponential`: Delivers extreme diversity by markedly diverging from the mean, which may also result in nonsensical outcomes.
 
 ## Known Issues
